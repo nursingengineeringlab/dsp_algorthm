@@ -103,6 +103,16 @@ float mag(float complex c)
 {
     return cabs(c);
 }
+void powe(float complex* x, size_t n)
+{
+	printf("Power of Frequencies:\n");
+	for (int i = 0;i < n; i++){
+		float power= x[i]*conj(x[i]);
+		printf("%f\n",power);
+	}
+
+}
+	
 float mean(float complex* x, size_t n, float samplerate)
 {
     float sum = 0.0;
@@ -141,14 +151,10 @@ int main()
 		vector[n] = n;
 	}
 
-	printf("in time domain:\n");
-
-	for(size_t n = 0; n < N; n++) {
-		printf("%f%+fi\n", creal(vector[n]), cimag(vector[n]));
-	}
+	
 	float samplerate;
     printf("Enter the sample rate: ");
-    scanf("%lf", &samplerate);
+    scanf("%f", &samplerate);
 
 
 	fft(vector, N);
@@ -161,16 +167,10 @@ int main()
 	float meanfreq = mean(vector, N, samplerate);
     float medianfreq = median(vector, N, samplerate);
 
-    printf("\nMean Frequency: \n", meanfreq);
-    printf("Median Frequency: \n", medianfreq);
+    printf("\nMean Frequency: %f\n", meanfreq);
+    printf("Median Frequency: %f\n", medianfreq);
+    powe(vector, N);
 
-	ift(vector, N);
-
-	printf("in time domain:\n");
-
-	for(size_t n = 0; n < N; n++) {
-		printf("%f%+fi\n", creal(vector[n]), cimag(vector[n]));
-	}
-
+	
 	return 0;
 }
