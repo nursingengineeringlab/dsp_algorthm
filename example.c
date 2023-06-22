@@ -112,7 +112,7 @@ float powe(float complex* x, size_t n)
 		printf("%f\n",power);
 		sum+=power;
 	}
-	return sum
+	return sum;
 
 }
 	
