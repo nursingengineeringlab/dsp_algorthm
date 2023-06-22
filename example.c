@@ -174,7 +174,7 @@ int main()
     printf("\nMean Frequency: %f\n", meanfreq);
     printf("Median Frequency: %f\n", medianfreq);
     powe(vector, N);
-	printf("\n Total Power: %f\n", totalpower);
+	printf("Total Power: %f\n", totalpower);
 
 	
 	return 0;
