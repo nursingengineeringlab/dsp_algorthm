@@ -103,13 +103,16 @@ float mag(float complex c)
 {
     return cabs(c);
 }
-void powe(float complex* x, size_t n)
+float powe(float complex* x, size_t n)
 {
+	float sum = 0.0;
 	printf("Power of Frequencies:\n");
 	for (int i = 0;i < n; i++){
 		float power= x[i]*conj(x[i]);
 		printf("%f\n",power);
+		sum+=power;
 	}
+	return sum
 
 }
 	
@@ -166,10 +169,12 @@ int main()
 	}
 	float meanfreq = mean(vector, N, samplerate);
     float medianfreq = median(vector, N, samplerate);
+	float totalpower = powe(vector,N);
 
     printf("\nMean Frequency: %f\n", meanfreq);
     printf("Median Frequency: %f\n", medianfreq);
     powe(vector, N);
+	printf("\n Total Power: %f\n", totalpower);
 
 	
 	return 0;
