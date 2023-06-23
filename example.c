@@ -113,7 +113,6 @@ float powe(float complex* x, size_t n)
 		sum+=power;
 	}
 	return sum;
-
 }
 	
 float mean(float complex* x, size_t n, float samplerate)
@@ -143,7 +142,24 @@ float median(float complex* x, size_t n, float samplerate)
         return frequencies[middle];
     }
 }
-
+float peakfreq(float complex* x, size_t n, float samplerate)
+{
+	float maxmag = 0.0;
+	float peakfr = 0.0;
+	for (size_t i = 0; i < n; i++){
+		float magn = mag(x[i]);
+		printf("Magnitude: %f\n", magn);
+		float frequency = i * samplerate / n;
+		printf("Frequency: %f\n", frequency);
+		
+		if (magn > maxmag){
+			maxmag = magn;
+			peakfr = frequency;
+			printf("Peak Frequency: %f\n", peakfr);
+		}
+	}
+	return peakfr;
+}
 int main()
 {
 	size_t N = 1<<3;
@@ -168,14 +184,15 @@ int main()
 		printf("%f%+fi\n", creal(vector[n]), cimag(vector[n]));
 	}
 	float meanfreq = mean(vector, N, samplerate);
-    float medianfreq = median(vector, N, samplerate);
+    	float medianfreq = median(vector, N, samplerate);
+    	float peakfrequ = peakfreq(vector, N, samplerate);
 	float totalpower = powe(vector,N);
 
-    printf("\nMean Frequency: %f\n", meanfreq);
-    printf("Median Frequency: %f\n", medianfreq);
-    powe(vector, N);
+    	printf("Mean Frequency: %f\n", meanfreq);
+    	printf("Median Frequency: %f\n", medianfreq);
+    	printf("Peak Frequency: %f\n", peakfrequ);	
 	printf("Total Power: %f\n", totalpower);
-
+	
 	
 	return 0;
 }
