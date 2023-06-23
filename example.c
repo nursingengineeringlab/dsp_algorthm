@@ -1,7 +1,6 @@
 #include <stddef.h>
 #include <complex.h>
 #include "fft.h"
-#include "ift.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
