@@ -5,6 +5,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+float meanfreq;
+float medianfreq;
+float peakfrequ;
+float totalpower;
 static int ctz(size_t N)
 {
 	int ctz1 = 0;
@@ -182,10 +186,10 @@ int main()
 	for(size_t n = 0; n < N; n++) {
 		printf("%f%+fi\n", creal(vector[n]), cimag(vector[n]));
 	}
-	float meanfreq = mean(vector, N, samplerate);
-    	float medianfreq = median(vector, N, samplerate);
-    	float peakfrequ = peakfreq(vector, N, samplerate);
-	float totalpower = powe(vector,N);
+	meanfreq = mean(vector, N, samplerate);
+    medianfreq = median(vector, N, samplerate);
+    peakfrequ = peakfreq(vector, N, samplerate);
+	totalpower = powe(vector,N);
 
     	printf("Mean Frequency: %f\n", meanfreq);
     	printf("Median Frequency: %f\n", medianfreq);
