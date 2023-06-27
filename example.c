@@ -1,14 +1,39 @@
 #include <stddef.h>
+#include <stdint.h>
 #include <complex.h>
 #include "fft.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-float meanfreq;
-float medianfreq;
-float peakfrequ;
-float totalpower;
+
+#define EMG_SIGNAL_SIZE	64
+#define MA_FILTER_SIZE	8
+#define ENVELOPE_SIZE 16
+
+double emg_value_raw;
+double emg_mean_absolute_value;
+double emg_integrated;
+double emg_ssi;
+double emg_variance;
+double emg_rms;
+int16_t emg_myopulse_percent;
+
+uint8_t ndx;
+
+
+int16_t emg_array_raw[MA_FILTER_SIZE];
+uint8_t emg_array_raw_index;
+double emg_array_out[EMG_SIGNAL_SIZE];
+uint8_t emg_array_out_index;
+int16_t emg_envelope[ENVELOPE_SIZE];
+uint8_t emg_envelope_index;
+
+
+double meanfreq;
+double medianfreq;
+double peakfrequ;
+double totalpower;
 static int ctz(size_t N)
 {
 	int ctz1 = 0;
@@ -21,7 +46,7 @@ static int ctz(size_t N)
 	return ctz1-1;
 }
 
-static void nop_split(const float complex *x, float complex *X, size_t N)
+static void nop_split(const double complex *x, double complex *X, size_t N)
 {
 	for(size_t n = 0; n < N/2; n++) {
 		X[2*n+0] = x[0/2+n];
@@ -29,7 +54,7 @@ static void nop_split(const float complex *x, float complex *X, size_t N)
 	}
 }
 
-static void fft_split(const float complex *x, float complex *X, size_t N, float complex phi)
+static void fft_split(const double complex *x, double complex *X, size_t N, double complex phi)
 {
 	for(size_t n = 0; n < N/2; n++) {
 		X[2*n+0] = (x[0/2+n] + x[N/2+n]);
@@ -48,7 +73,7 @@ static size_t revbits(size_t v, int J)
 	return r;
 }
 
-static int nop_reverse(int b, float complex *buffers[2], size_t N)
+static int nop_reverse(int b, double complex *buffers[2], size_t N)
 {
 	int J = ctz(N);
 
@@ -63,7 +88,7 @@ static int nop_reverse(int b, float complex *buffers[2], size_t N)
 	return b;
 }
 
-static int fft_reverse(int b, float complex *buffers[2], size_t N)
+static int fft_reverse(int b, double complex *buffers[2], size_t N)
 {
 	int J = ctz(N);
 
@@ -71,7 +96,7 @@ static int fft_reverse(int b, float complex *buffers[2], size_t N)
 		size_t delta = N>>j;
 
 		for(size_t n = 0; n < N; n += delta) {
-			float complex phi = (float)revbits( n/delta, j) / (float)(2<<j);
+			double complex phi = (double)revbits( n/delta, j) / (double)(2<<j);
 			fft_split(buffers[b&1]+n, buffers[~b&1]+n, delta, phi);
 		}
 	}
@@ -79,13 +104,13 @@ static int fft_reverse(int b, float complex *buffers[2], size_t N)
 	return b;
 }
 
-int fft(float complex *vector, size_t N)
+int fft(double complex *vector, size_t N)
 {
 	if( !N ) return 0;
 
 	if( N & (N-1) ) return 1;
 
-	float complex *buffers[2] = { vector, malloc(N*sizeof(float complex)) };
+	double complex *buffers[2] = { vector, malloc(N*sizeof(double complex)) };
 
 	if( !buffers[1] ) return -1;
 
@@ -95,70 +120,67 @@ int fft(float complex *vector, size_t N)
 	b = fft_reverse(b, buffers, N);
 	b = nop_reverse(b, buffers, N);
 
-	memmove(vector, buffers[b&1], N*sizeof(float complex));
+	memmove(vector, buffers[b&1], N*sizeof(double complex));
 
 	free( buffers[1] );
 
 	return 0;
 }
 
-float mag(float complex c)
+double mag(double complex c)
 {
     return cabs(c);
 }
-float powe(float complex* x, size_t n)
+double powe(double complex* x, size_t n)
 {
-	float sum = 0.0;
+	double sum = 0.0;
 	printf("Power of Frequencies:\n");
 	for (int i = 0;i < n; i++){
-		float power= x[i]*conj(x[i]);
+		double power= x[i]*conj(x[i]);
 		printf("%f\n",power);
 		sum+=power;
 	}
 	return sum;
 }
 	
-float mean(float complex* x, size_t n, float samplerate)
+double mean(double complex* x, size_t n, double samplerate)
 {
-    float sum = 0.0;
+    double sum = 0.0;
     for (int i = 0; i < n; i++) {
-        float magnitudevalue = mag(x[i]);
-        float frequency = i * samplerate / n;
+        double magnitudevalue = mag(x[i]);
+        double frequency = i * samplerate / n;
         sum += magnitudevalue * frequency;
     }
     return sum / n;
 }
-float median(float complex* x, size_t n, float samplerate)
+double median(double complex* x, size_t n, double samplerate)
 {
-    float frequencies[n];
+    double frequencies[n];
     for (size_t i = 0; i < n; i++) {
-        float magnitudevalue = mag(x[i]);
-        float frequency = i * samplerate / n;
+        double magnitudevalue = mag(x[i]);
+        double frequency = i * samplerate / n;
         frequencies[i] = magnitudevalue * frequency;
     }
 
     size_t middle = n / 2;
     if (n % 2 == 0) {
-        float median = (frequencies[middle - 1] + frequencies[middle]) / 2.0;
+        double median = (frequencies[middle - 1] + frequencies[middle]) / 2.0;
         return median;
     } else {
         return frequencies[middle];
     }
 }
-float peakfreq(float complex* x, size_t n, float samplerate)
+double peakfreq(double complex* x, double n, double samplerate)
 {
-	float maxmag = 0.0;
-	float peakfr = 0.0;
+	double maxmag = 0.0;
+	double peakfr = 0.0;
 	for (size_t i = 0; i < n; i++){
-		float magn = mag(x[i]);
-		printf("Magnitude: %f\n", magn);
-		float frequency = i * samplerate / n;
-		printf("Frequency: %f\n", frequency);
+		double magn = mag(x[i]);
+		double frequency = i * samplerate / n;
 		
 		if (magn > maxmag){
 			maxmag = magn;
 			peakfr = frequency;
-			printf("Peak Frequency: %f\n", peakfr);
 		}
 	}
 	return peakfr;
@@ -167,16 +189,16 @@ int main()
 {
 	size_t N = 1<<3;
 
-	float complex vector[N];
+	double complex vector[N];
 
 	for(size_t n = 0; n < N; n++) {
 		vector[n] = n;
 	}
 
 	
-	float samplerate;
+	double samplerate;
     printf("Enter the sample rate: ");
-    scanf("%f", &samplerate);
+    scanf("%lf", &samplerate);
 
 
 	fft(vector, N);
@@ -184,7 +206,7 @@ int main()
 	printf("in frequency domain:\n");
 
 	for(size_t n = 0; n < N; n++) {
-		printf("%f%+fi\n", creal(vector[n]), cimag(vector[n]));
+		printf("%lf%+lfi\n", creal(vector[n]), cimag(vector[n]));
 	}
 	meanfreq = mean(vector, N, samplerate);
     medianfreq = median(vector, N, samplerate);
