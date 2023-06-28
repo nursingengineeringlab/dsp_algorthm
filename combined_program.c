@@ -26,12 +26,14 @@ int16_t emg_array_raw[MA_FILTER_SIZE];
 uint8_t emg_array_raw_index;
 double emg_array_out[EMG_SIGNAL_SIZE];
 uint8_t emg_array_out_index;
+uint8_t emg_array_out_index_init;
 int16_t emg_envelope[ENVELOPE_SIZE];
 uint8_t emg_envelope_index;
 
 uint8_t ndx;
 
 double complex vector[FFT_SIZE];
+double complex vector1[FFT_SIZE];
 double samplerate;
 double meanfreq;
 double medianfreq;
@@ -193,7 +195,7 @@ double peakfreq(double complex* x, double n, double samplerate)
 int main(){
 	double MA_SUM = 0;
 	samplerate=64;
-
+	
 
 
 	for (size_t n = 0; n < FFT_SIZE; n++)
@@ -205,7 +207,7 @@ int main(){
 	  	
 	  	//Assigning complex vector for FFT
 	  	
-	  	vector[emg_array_raw_index++] = emg_value_raw; //works for now but will need separated variable for index
+	  	vector[emg_array_out_index] = emg_value_raw; //works for now but will need separated variable for index
 	  	
 	  	// fill buffer with raw signals and increase index
 	  	emg_array_raw[emg_array_raw_index++] = emg_value_raw;
@@ -260,27 +262,29 @@ int main(){
 		emg_rms = 0.0;
 		emg_variance = 0.0;
 		
-		}
 		
-		size_t n=50;
-
-		fft(vector, n);
+		emg_array_out_index_init = emg_array_out_index-1;
+		fft(vector, emg_array_out_index_init);
 
 		printf("in frequency domain:\n");
 
-		for(size_t x = 0; x < n; x++) {
+		for(size_t x = 0; x < emg_array_out_index_init; x++) {
 			printf("%lf%+lfi\n", creal(vector[x]), cimag(vector[x]));
 		}
-		meanfreq = mean(vector, n, samplerate);
-    		medianfreq = median(vector, n, samplerate);
-    		peakfrequ = peakfreq(vector, n, samplerate);
-		totalpower = powe(vector,n);
+		
+		meanfreq = mean(vector, emg_array_out_index_init, samplerate);
+    		medianfreq = median(vector, emg_array_out_index_init, samplerate);
+    		peakfrequ = peakfreq(vector, emg_array_out_index_init, samplerate);
+		totalpower = powe(vector,emg_array_out_index_init);
 
     		printf("Mean Frequency: %lf\n", meanfreq);
     		printf("Median Frequency: %lf\n", medianfreq);
     		printf("Peak Frequency: %lf\n", peakfrequ);	
 		printf("Total Power: %lf\n", totalpower);
-	
+		printf("EMG Array Out Index %u\n",  emg_array_out_index_init);
+		
+		//emg_array_out_index++;
+	}
 	
 		return 0;
 
