@@ -10,7 +10,6 @@
 #define EMG_SIGNAL_SIZE	64
 #define MA_FILTER_SIZE	8
 #define ENVELOPE_SIZE 16
-#define FFT_SIZE 50
 
 
 double emg_value_raw;
@@ -32,8 +31,7 @@ uint8_t emg_envelope_index;
 
 uint8_t ndx;
 
-double complex vector[FFT_SIZE];
-double complex vector1[FFT_SIZE];
+double complex vector[EMG_SIGNAL_SIZE];
 double samplerate;
 double meanfreq;
 double medianfreq;
@@ -194,21 +192,13 @@ double peakfreq(double complex* x, double n, double samplerate)
 
 int main(){
 	double MA_SUM = 0;
-	samplerate=64;
 	
-
-
-	for (size_t n = 0; n < FFT_SIZE; n++)
+	for (;;)
 	  {
-	  
 	  
 	  	// get raw signal input
 	  	emg_value_raw = rand() % 97 * -1 ;
-	  	
-	  	//Assigning complex vector for FFT
-	  	
-	  	vector[emg_array_out_index] = emg_value_raw; //works for now but will need separated variable for index
-	  	
+	  		  	
 	  	// fill buffer with raw signals and increase index
 	  	emg_array_raw[emg_array_raw_index++] = emg_value_raw;
 	  	
@@ -222,12 +212,12 @@ int main(){
 		
 		// fill out buffer with Moving average values
 		
-		emg_array_out[emg_array_out_index++] = MA_SUM / MA_FILTER_SIZE;
-
-		// reset array out index
-	  	if (emg_array_out_index >= EMG_SIGNAL_SIZE - 1)
-	  		emg_array_out_index = 0;
-
+		emg_array_out[emg_array_out_index] = MA_SUM / MA_FILTER_SIZE;
+		
+		//Assigning complex vector for FFT
+	  	
+	  	vector[emg_array_out_index++] = MA_SUM / MA_FILTER_SIZE; 
+		
 		// a pointer to emg_array_out buffer
 		double * c = emg_array_out;
 		
@@ -262,36 +252,35 @@ int main(){
 		emg_rms = 0.0;
 		emg_variance = 0.0;
 		
+		if (emg_array_out_index == EMG_SIGNAL_SIZE-1)
+		{
+			emg_array_out_index_init = emg_array_out_index;
+			fft(vector, emg_array_out_index_init+1);
+	
+			printf("in frequency domain:\n");
+	
+			for(size_t x = 0; x < emg_array_out_index_init; x++) {
+				printf("%lf%+lfi\n", creal(vector[x]), cimag(vector[x]));
+			}
 		
-		emg_array_out_index_init = emg_array_out_index-1;
-		fft(vector, emg_array_out_index_init);
-
-		printf("in frequency domain:\n");
-
-		for(size_t x = 0; x < emg_array_out_index_init; x++) {
-			printf("%lf%+lfi\n", creal(vector[x]), cimag(vector[x]));
+			meanfreq = mean(vector, emg_array_out_index_init+1, samplerate);
+	    		medianfreq = median(vector, emg_array_out_index_init+1, samplerate);
+	    		peakfrequ = peakfreq(vector, emg_array_out_index_init+1, samplerate);
+			totalpower = powe(vector,emg_array_out_index_init+1);
+			printf("EMG VALUE RAW: %lf\n", emg_value_raw);
+	    		printf("Mean Frequency: %lf\n", meanfreq);
+	    		printf("Median Frequency: %lf\n", medianfreq);
+	    		printf("Peak Frequency: %lf\n", peakfrequ);	
+			printf("Total Power: %lf\n", totalpower);
+			printf("EMG Array Out Index %u\n",  emg_array_out_index);
+		
 		}
 		
-		meanfreq = mean(vector, emg_array_out_index_init, samplerate);
-    		medianfreq = median(vector, emg_array_out_index_init, samplerate);
-    		peakfrequ = peakfreq(vector, emg_array_out_index_init, samplerate);
-		totalpower = powe(vector,emg_array_out_index_init);
-
-    		printf("Mean Frequency: %lf\n", meanfreq);
-    		printf("Median Frequency: %lf\n", medianfreq);
-    		printf("Peak Frequency: %lf\n", peakfrequ);	
-		printf("Total Power: %lf\n", totalpower);
-		printf("EMG Array Out Index %u\n",  emg_array_out_index_init);
-		
-		//emg_array_out_index++;
+		// reset array out index
+	  	if (emg_array_out_index >= EMG_SIGNAL_SIZE - 1)
+	  		emg_array_out_index = 0;
 	}
 	
-		return 0;
-
-
-
-	  
-
-	
+	return 0;
 
 }
