@@ -170,7 +170,8 @@ float median(float complex* x, size_t n, float samplerate)
     if (n % 2 == 0) {
         float median = (frequencies[middle - 1] + frequencies[middle]) / 2.0;
         return median;
-    } else {
+    }
+    else {
         return frequencies[middle];
     }
 }
