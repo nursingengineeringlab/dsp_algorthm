@@ -224,7 +224,7 @@ int main(){
 		
 		// print contents of emg_array_out ie MAV's
 		while( *c != '\0'){
-			printf("\n%f", *c);
+			printf("out: %f ", *c);
 			emg_integrated += (*c < 0) ? (*c * -1) : *c;
 			emg_ssi += *c * *c;
 			c++;
