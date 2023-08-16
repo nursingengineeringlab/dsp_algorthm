@@ -1,0 +1,11 @@
+//This header file needs to be included at the top for the usleep function:
+#include <unistd.h> 
+
+// ... Rest of your code ...
+    {//Inside the main For loop
+        // Adds a delay of 100000 microseconds (100 milliseconds)
+        usleep(100000);
+    }
+
+    return 0;
+}
